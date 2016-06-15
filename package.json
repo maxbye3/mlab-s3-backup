@@ -1,0 +1,30 @@
+{
+  "name": "mlab_s3_backup",
+  "version": "0.0.1",
+  "description": "Backup your mlab databases to s3.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node ./app/mlab_s3_backup.js ./config.json",
+    "debug": "node --debug-brk ./app/mlab_s3_backup.js -n ./config.json",
+    "backupNow": "node ./app/mlab_s3_backup.js -n ./config.json"
+  },
+  "repository": "",
+  "keywords": [
+    "Mongodb",
+    "S3",
+    "backup"
+  ],
+  "author": "Max Bye <mb@rebelminds.com>",
+  "dependencies": {
+    "async": "~0.1.22",
+    "cli": "~0.4.4-2",
+    "cli-color": "~0.2.1",
+    "cron": "~1.0.1",
+    "knox": "~0.8.0",
+    "nodemailer": "^2.4.2",
+    "time": "^0.11.2"
+  },
+  "engines": {
+    "node": ">=0.8"
+  }
+}
