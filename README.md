@@ -1,41 +1,57 @@
-# Node MongoDB / S3 Backup
+# mLab S3 Backup
 
-This is a package that makes backing up your mongo databases to S3 simple.
-The binary file is a node cronjob that runs at midnight every day and backs up
-the database specified in the config file.
+This is a node project that makes backing up your mLab databases to S3.
+The config file specifies which database to back-up and includes cron "time" field to explicitly backup at a set time.
 
 ## Installation
+<ul>
+<li> Clone or download this repo. </li>
+<li> To configure the backup, you need to pass the binary a JSON configuration file </li>
+<li> Open <code>config.json</code> in your favourite code editor </li>
+</ul>
 
-    npm install mongodb_s3_backup -g
 
 ## Configuration
 
-To configure the backup, you need to pass the binary a JSON configuration file.
-There is a sample configuration file supplied in the package (`config.sample.json`).
 The file should have the following format:
 
     {
+      "sesTransport": {
+        "to": "YOUR_EMAIL",
+        "from": "SES_TRANSPORT_SERVER_EMAIL",
+        "key": "SES_TRANSPORT_SERVER_KEY",
+        "secret": "SES_TRANSPORT_SERVER_SECRET",
+        "region": "SES_TRANSPORT_SERVER_REGION"
+      },
       "mongodb": {
-        "host": "localhost",
-        "port": 27017,
-        "username": false,
-        "password": false,
-        "db": "database_to_backup"
+        "host": "SES_KEY",
+        "port": PORT_NUMBER,
+        "username": USERNAME,
+        "password": PASSWORD,
+        "db": "DATABASE_TO_BACKUP"
       },
       "s3": {
-        "key": "your_s3_key",
-        "secret": "your_s3_secret",
-        "bucket": "s3_bucket_to_upload_to",
+        "key": "YOUR_S3_KEY",
+        "secret": "YOUR_S3_SECRET",
+        "bucket": "SS_BUCKET_TO_UPLOAD_TO",
         "destination": "/",
-        "encrypt": true,
-        "region": "s3_region_to_use"
+        "encrypt": TRUE,
+        "region": "S3_REGION_TO_USE"
       },
       "cron": {
         "time": "11:59",
       }
     }
 
-All options in the "s3" object, except for desination, will be directly passed to knox, therefore, you can include any of the options listed [in the knox documentation](https://github.com/LearnBoost/knox#client-creation-options "Knox README").
+A breakdown on how to setup each of these fields follows.
+
+### Config.json SES (Simple Email Service) Transport Fields
+Nodemailer will email you if the s3 server is unreachable or there is a problem with extracting database data.
+The SES Transport fields are used to configure nodemailer. 
+However, emailing errors is entirely optional and leaving these fields blank will not effect the backup.
+If you work for Rebel Minds, bother Max Bye for these details.
+Otherwise, a configured Amazon SES is recommended and setup instructions can be found <a href="https://aws.amazon.com/ses/" target="_blank">here</a>. 
+
 
 ### Crontabs
 

@@ -33,7 +33,7 @@ backup.log('Bin config file (' + configPath + ')');
 config = require(configPath);
 
 if(options.now) {
-  backup.sync(config.mongodb, config.s3, config.userEmail, function(err) {
+  backup.sync(config.mongodb, config.s3, config.sesTransport, function(err) {
     process.exit(err ? 1 : 0);
   });
 } else {

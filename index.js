@@ -82,23 +82,24 @@ function removeRF(target, callback) {
  *
  * Sends email of error to user
  *
- * @param errorMsg   Error to email back to user
- * @param s3options   s3 options [key, secret, bucket]
- * @param email   user email
+ * @param errorMsg       error to email back to user
+ * @param s3options      s3 options [key, secret, bucket]
+ * @param emailoptions   sesTransport options [to, from, key, secret, region]
+ * @param callback       callback(error)
  */
-function sendMail(errorMsg,s3options,email,callback){
+function sendMail(errorMsg,s3options,emailoptions,callback){
   // node mailer test
   var transporter = nodemailer.createTransport(sesTransport({
-				accessKeyId: s3options.key,
-				secretAccessKey: s3options.secret,
-				region: s3options.region,
+				accessKeyId: emailoptions.key,
+				secretAccessKey: emailoptions.secret,
+				region: emailoptions.region,
 				rateLimit: 5 // do not send more than 5 messages in a second
 			}));
 
 			// setup e-mail data with unicode symbols 
 			var mailOptions = {
-				from: 'no-reply@rebelminds.com',
-				to: email, // list of receivers				
+				from: emailoptions.from,
+				to: emailoptions.to, // list of receivers				
 				subject: 'mLab s3 Backup Problem', // Subject line 
 				text: 'Hi, \n Thanks for using mlab backup.\nUnfortunately, you got an error!\n'+errorMsg+'.\nIf the problem persists, please contact mb@rebelminds.com. \n\n Many thanks, \n Max. ', // plaintext body 
 				html: 'Hi, <br> Thanks for using mlab backup.<br>Unfortunately, you got an error!<br>'+errorMsg+'.<br>If the problem persists, please contact mb@rebelminds.com. <br><br> Many thanks, <br> Max. ',// html body 
@@ -166,8 +167,8 @@ function mongoDump(options, emailoptions, directory, s3options, callback) {
       callback(null);
     } else {
       
-      if (validateEmail(emailoptions.email)) {
-        sendMail('Cannot connect to mLab, please check your config file.',s3options,emailoptions.email,callback);
+      if (validateEmail(emailoptions.to)) {
+        sendMail('Cannot connect to mLab, please check your config file.',s3options,emailoptions,callback);
       }
       else {
         log('no email left to send error report');
@@ -263,8 +264,8 @@ function sendToS3(options, emailoptions, directory, target, callback) {
       if (res.statusCode !== 200) {
         var errorMsg = 'We expected a 200 response from S3, got ' + res.statusCode;
           
-        if (validateEmail(emailoptions.email)) {
-          sendMail(errorMsg,options,email,callback);
+        if (validateEmail(emailoptions.to)) {
+          sendMail(errorMsg,options,emailoptions,callback);
         }
         else {
           log('no email left to send error report');
@@ -298,7 +299,7 @@ function validateEmail(email){
  * @param s3Config        s3 config [key, secret, bucket]
  * @param callback        callback(err)
  */
-function sync(mongodbConfig, s3Config, userEmail, callback) {
+function sync(mongodbConfig, s3Config, sesTransport, callback) {
   var tmpDir = path.join(require('os').tmpDir(), 'mongodb_s3_backup')
     , backupDir = path.join(tmpDir, mongodbConfig.db)
     , archiveName = getArchiveName(mongodbConfig.db)
@@ -313,9 +314,9 @@ function sync(mongodbConfig, s3Config, userEmail, callback) {
   ];
 
   async.series(tmpDirCleanupFns.concat([
-    async.apply(mongoDump, mongodbConfig, userEmail, tmpDir, s3Config),
+    async.apply(mongoDump, mongodbConfig, sesTransport, tmpDir, s3Config),
     async.apply(compressDirectory, tmpDir, mongodbConfig.db, archiveName),
-    d.bind(async.apply(sendToS3, s3Config, userEmail, tmpDir, archiveName)) // this function sometimes throws EPIPE errors
+    d.bind(async.apply(sendToS3, s3Config, sesTransport, tmpDir, archiveName)) // this function sometimes throws EPIPE errors
   ]), function(err) {
     if(err) {
       log(err, 'error');
